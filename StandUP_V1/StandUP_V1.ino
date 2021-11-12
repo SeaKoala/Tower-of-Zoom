@@ -1,4 +1,17 @@
 //https://www.instructables.com/Arduino-Self-Balancing-Robot-1/
+// includes
+#include <HardwareSerial.h>
+#include <SoftwareSerial.h>
+#include <ODriveArduino.h>
+// Printing with stream operator helper functions
+template<class T> inline Print& operator <<(Print &obj,     T arg) {
+  obj.print(arg);
+  return obj;
+}
+template<>        inline Print& operator <<(Print &obj, float arg) {
+  obj.print(arg, 4);
+  return obj;
+}
 
 
 #include "Wire.h"
@@ -32,7 +45,7 @@ int16_t accY, accZ, gyroX;
 volatile int motorPower, gyroRate;
 volatile float accAngle, gyroAngle, currentAngle, prevAngle=0, error, prevError=0, errorSum=0;
 volatile byte count=0;
-//int distanceCm;
+int distanceCm;
 
 //void setMotors(int leftMotorSpeed, int rightMotorSpeed) {
 //  if(leftMotorSpeed >= 0) {
@@ -52,6 +65,10 @@ volatile byte count=0;
 //    digitalWrite(rightMotorDirPin, HIGH);
 //  }
 //}
+ SoftwareSerial odrive_serial(8, 9);
+ ODriveArduino odrive(odrive_serial);
+
+
 
 
 
@@ -72,26 +89,57 @@ void init_PID() {
 }
 
 void setup() {
-   Serial.begin(9600);
-  // set the motor control and PWM pins to output mode
-//  pinMode(leftMotorPWMPin, OUTPUT);
-//  pinMode(leftMotorDirPin, OUTPUT);
-//  pinMode(rightMotorPWMPin, OUTPUT);
-//  pinMode(rightMotorDirPin, OUTPUT);
-  // set the status LED to output mode 
-//  pinMode(13, OUTPUT);
+   odrive_serial.begin(115200);
+   Serial.begin(115200); 
+  pinMode(13, OUTPUT);
   // initialize the MPU6050 and set offset values
   mpu.initialize();
-  mpu.setYAccelOffset(840);
+  mpu.setYAccelOffset(1593);
   mpu.setZAccelOffset(963);
   mpu.setXGyroOffset(40);
   // initialize PID sampling loop
 
+
+
+  // Serial to PC
+  while (!Serial) ; // wait for Arduino Serial Monitor to open
+  Serial.println("ODriveArduino");
+  Serial.println("Setting parameters...");
+
+  // In this example we set the same parameters to both motors.
+  // You can of course set them different if you want.
+  // See the documentation or play around in odrivetool to see the available parameters
+  for (int axis = 0; axis < 2; ++axis) {
+    odrive_serial << "w axis" << axis << ".controller.config.vel_limit " << 10.0f << '\n';
+    odrive_serial << "w axis" << axis << ".motor.config.current_lim " << 11.0f << '\n';
+    // This ends up writing something like "w axis0.motor.config.current_lim 10.0\n"
+  }
+
+
+//      init_PID();
    Serial.println("HAIIIOOO");
-     init_PID();
 }
 
 void loop() {
+      char c = Serial.read();
+
+    // Run calibration sequence
+    if (c == '0' || c == '1') {
+      int motornum = c - '0';
+      int requested_state;
+
+      requested_state = ODriveArduino::AXIS_STATE_MOTOR_CALIBRATION;
+      Serial << "Axis" << c << ": Requesting state " << requested_state << '\n';
+      if (!odrive.run_state(motornum, requested_state, true)) return;
+
+      requested_state = ODriveArduino::AXIS_STATE_ENCODER_OFFSET_CALIBRATION;
+      Serial << "Axis" << c << ": Requesting state " << requested_state << '\n';
+      if (!odrive.run_state(motornum, requested_state, true, 25.0f)) return;
+
+      requested_state = ODriveArduino::AXIS_STATE_CLOSED_LOOP_CONTROL;
+      Serial << "Axis" << c << ": Requesting state " << requested_state << '\n';
+      if (!odrive.run_state(motornum, requested_state, false /*don't wait*/)) return;
+    }
   // read acceleration and gyroscope values
   accY = mpu.getAccelerationY();
   accZ = mpu.getAccelerationX();  
@@ -100,18 +148,10 @@ void loop() {
 //  motorPower = constrain(motorPower, -255, 255);
 
 //  motorPower = constrain(motorPower, 0, 180);
-  Serial.println(currentAngle);
-  
-//  setMotors(motorPower, motorPower);
-  // measure distance every 100 milliseconds
-//  if((count%20) == 0){
-//    distanceCm = sonar.ping_cm();
-//  }
-//  if((distanceCm < 20) && (distanceCm != 0)) {
-//    setMotors(-motorPower, motorPower);
-//  }
-}
+//  Serial.println(currentAngle);
+
 // The ISR will be called every 5 milliseconds
+}
 ISR(TIMER1_COMPA_vect)
 {
   // calculate the angle of inclination
@@ -127,9 +167,9 @@ ISR(TIMER1_COMPA_vect)
   motorPower = Kp*(error) + Ki*(errorSum)*sampleTime - Kd*(currentAngle-prevAngle)/sampleTime;
   prevAngle = currentAngle;
   // toggle the led on pin13 every second
-//  count++;
-//  if(count == 200)  {
-//    count = 0;
-//    digitalWrite(13, !digitalRead(13));
-//  }
+  count++;
+  if(count == 200)  {
+    count = 0;
+    digitalWrite(13, !digitalRead(13));
+  }
 }

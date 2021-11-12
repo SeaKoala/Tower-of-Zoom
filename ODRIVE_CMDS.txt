@@ -1,0 +1,39 @@
+odrv0.axis1.motor.config.current_lim = 15
+odrv0.axis1.controller.config.vel_limit = 10
+odrv0.axis1.motor.config.calibration_current = 10
+odrv0.axis1.motor.config.pole_pairs = 7
+odrv0.axis1.motor.config.torque_constant = 8.27/260
+odrv0.axis1.motor.config.motor_type = MOTOR_TYPE_HIGH_CURRENT
+
+odrv0.axis1.encoder.config.cpr
+
+odrv0.axis1.motor.config.current_lim = 15
+odrv0.axis1.controller.config.vel_limit
+odrv0.axis1.motor.config.pole_pairs = 8
+odrv0.axis1.motor.config.motor_type = MOTOR_TYPE_HIGH_CURRENT
+
+odrv0.axis1.requested_state = AXIS_STATE_ENCODER_OFFSET_CALIBRATION
+odrv0.axis1.requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE
+
+odrv0.axis1.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
+odrv0.axis1.controller.input_pos = 1
+
+
+odrv0.axis1.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
+odrv0.axis1.controller.config.control_mode = CONTROL_MODE_POSITION_CONTROL
+
+
+odrv0.axis1.motor.config.phase_resistance
+
+odrv0.axis1.encoder.is_ready
+
+odrv0.save_configuration()
+odrv0.reboot()
+
+
+odrv0.axis1.controller.config.control_mode
+
+start_liveplotter(lambda:[odrv0.axis1.encoder.pos_estimate, odrv0.axis1.controller.pos_setpoint])
+
+odrv0.config.enable_uart
+ odrv0.config.uart_baudrate

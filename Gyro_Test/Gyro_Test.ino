@@ -23,4 +23,5 @@ void loop() {
   gyroAngle = gyroAngle + (float)gyroRate*loopTime/1000;
   
   Serial.println(gyroAngle);
+  delay(15);
 }
