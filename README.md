@@ -8,8 +8,8 @@ Currently In Progress
 
 1. ***Gain Measurements of All parts.*** This is neccessary for centering everything on robot.
 2. ***Build the dang improved robot.***
-      -Model in Fusion/any CAD
-      -Figure out what's gong on with Code
+      - Model in Fusion/any CAD
+      - Figure out what's gong on with Code
 
 ### Needs:
 1. Obviously to balance!
